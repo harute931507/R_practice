@@ -1,0 +1,23 @@
+Ggplot2 : elegrant graphics for data analysis
+http://weblis.lib.ncku.edu.tw/search~S1*cht/X?searchtype=X&searcharg=ggplot2&searchscope=1
+ebooks: 2016¡B2009
+
+
+The Grammar of Graphics
+http://weblis.lib.ncku.edu.tw/search~S1*cht/X?SEARCH=(The%20Grammar%20of%20Graphics)+and+a:(Leland%20Wilkinson)&SORT=D
+book: 1999; ebook: 2005
+
+
+R Graphics
+http://weblis.lib.ncku.edu.tw/search~S1*cht/X?SEARCH=((R%20Graphics)%20and%20a%3A(Paul%20Murrell))&SORT=D
+book: 2006¡B2011; ebook: 2011
+
+
+Lattice: Multivariate Data Visualization with R
+http://weblis.lib.ncku.edu.tw/search~S1*cht/X?searchtype=X&searcharg=Lattice%3A+Multivariate+Data+Visualization+with+R&searchscope=1
+ebook: 2008
+
+
+R Graphs Cookbook
+http://weblis.lib.ncku.edu.tw/search~S1*cht/X?searchtype=X&searcharg=R+Graphs+Cookbook&searchscope=1
+book: 2011

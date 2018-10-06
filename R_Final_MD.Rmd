@@ -1,0 +1,294 @@
+---
+title: "Numerical Integration"
+author: "C14026175 §õ©_°a & C14026214 ´¿·q¬À"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r  results = "hide", warning = FALSE, message = FALSE}
+# Initial
+# Get Data
+url <- "https://drive.google.com/uc?authuser=0&id=1cm5peMNKu1uEdtoqlWt_bLi5l3cvb8SQ&export=download"
+data <- read.csv(url, header = F)
+
+if (!"magick" %in% installed.packages()) install.packages("magick")
+library(magick)
+
+# Reorganize
+col_names <- c("h","M_Time","M_Value","M_Error","T_Time","T_Value","T_Error",
+               "S_Time","S_Value","S_Error","M_Digit","T_Digit","S_Digit")
+
+# Set Digits
+data[,1] <- 1:15
+data[,11] <- -trunc(log10(data[,4]))
+data[,12] <- -trunc(log10(data[,7]))
+data[,13] <- -trunc(log10(data[,10]))
+
+# Reset Names
+colnames(data) <- col_names
+
+attach(data)
+
+# Define fx
+fx <- function(x){
+  2*x + x * sin(x)
+  }
+```
+
+<!--
+---{r}
+#h_step <- c(1,0.5,0.1,0.05,0.01,0.005,0.001,0.0005,0.0001,5.00E-05,1.00E-05,5.00E-06,1.00E-06,5.00E-07,1.00E-07)
+par(mfrow=c(2,2))
+plot(h, S_Digit, pch = 1, type = "b",col = 1, xlab="", ylab="", las = 1)
+points(h, T_Digit, pch = 0, type = "b", col = "dark red", lwd = 1.5)
+points(h, M_Digit, pch = 4, type = "b", col = "blue", lwd = 1.5)
+plot(h, S_Error, pch = 1, type = "b",col = 1, xlab="", ylab="", las = 1)
+points(h, T_Error, pch = 0, type = "b", col = "dark red", lwd = 1.5)
+points(h, M_Error, pch = 4, type = "b", col = "blue", lwd = 1.5)
+---
+---{r}
+newlogo <- image_scale(image_read("example01.png"), "x300")
+oldlogo <- image_scale(image_read("example02.png"), "x300")
+frames <- image_morph(c(oldlogo, newlogo), frames = 150)
+image_animate(frames)
+---
+data
+![your caption here](test.gif)!
+
+#for(i in 1:pointNum ){
+#  assign( paste("PIC", i, sep = ""),
+#          image_read( paste( c("Trapezoidal Rule"), i, ".png", sep="")))
+#}
+
+#PIC <- c(PIC1,PIC2,PIC3,PIC4,PIC5,PIC6,PIC7,PIC8,PIC9,PIC10,PIC11,PIC12,PIC13,PIC14,PIC15)
+-->
+
+
+
+----------
+
+### Introduction
+
+Not all functions can be evaluated by the __*Fundamental Theorem of Calculus*__ .<br>
+$\begin{align*}
+ \text{Example : }\large x^x \ \text{or} \  \frac{sin(x)}{x} \large  \\
+\end{align*}$<br>
+- __Liouville's theorem__
+
+Therefore, we need to use __Numerical Integration__ to approximate the value of this kind function.
+
+----------
+
+### Methods
+
+__Numerical Integration__ methods can generally be described as combining evaluations of the __Integrand__ to get an approximation to the integral.<br> The __Integrand__ is evaluated at a finite set of points called __Integration Points__ and a weighted sum of these values is used to approximate the integral.<br> The __Integration Points__ and weights depend on the specific method used and the accuracy required from the approximation.<br>
+
+```{r}
+plot(sin, from = pi/6, to = 3*pi/2,xlab = "", ylab = "", xaxt = 'n', yaxt = 'n')
+axis(1, at=1:4, tck = 0)
+mtext("X", side = 1, cex = 1.5, line = 2)
+mtext("Y", side = 2, cex = 1.5, line = 2, las = 1)
+
+lines(c(1,1), c(-1.2, max(sin(1:100/50))), lty = 2)
+lines(c(2,2), c(-1.2, max(sin(1:100/50))), lty = 2)
+lines(c(3,3), c(-1.2, sin(2)), lty = 2)
+lines(c(4,4), c(-1.2, sin(4)), lty = 2)
+
+lines(c(1,2), c(max(sin(1:100/50)), max(sin(1:100/50))), lty = 3)
+lines(c(2,3), c(sin(2), sin(2)), lty = 3)
+lines(c(3,4), c(sin(4), sin(4)), lty = 3)
+```
+
+* __Midpoint Rule__
+* __Trapezoidal Rule__
+* __*Simpson's* Rule__
+
+----------
+
+### Consider the function $\int_{5}^{13} 2x + xsin(x) dx$
+```{r}
+plot(fx, from = 4.5, to = 13.5, xlab = "", ylab = "", 
+     xaxt = 'n', yaxt = 'n', col = "skyblue", lwd = 3)
+title(expression(paste(integral(x + x*sin(x)*dx, 5, 13))),cex = 1.5)
+axis(1, at=5:13)
+mtext("X", side = 1, cex = 1.5, line = 2.5)
+mtext("Y", side = 2, cex = 1.5, line = 2, las = 1)
+```
+
+----------
+
+### Midpoint Rule
+
+The Midpoint Rule is a kind of Riemann sum, which working by approximating the region under the graph of the function as rectangles .
+
+```{r}
+plot(fx, from = 4.5, to = 13.5, xlab = "", ylab = "", 
+     xaxt = 'n', yaxt = 'n', col = "skyblue", lwd = 3,
+     main = "Midpoint Rule")
+axis(1, at=5:13)
+mtext("X", side = 1, cex = 1.5, line = 2.5)
+mtext("Y", side = 2, cex = 1.5, line = 2, las = 1)
+
+points(5, fx(5), pch = 21 , bg = "red", cex = 1.5 , col = "red")
+points(13, fx(13), pch = 21 , bg = "red", cex = 1.5, col = "red")
+points(9,fx(9), cex = 1.5 , col = "red")
+
+lines(c(5, 13), c(fx(9), fx(9)), col = "red" , lty = 2)
+lines(c(5,5), c(0,fx(9)), col = "red", lwd = 3)
+lines(c(13,13), c(0,fx(9)), col = "red", lwd = 3)
+```
+
+when h get smaller , we can see that the region get closer to the real value .
+
+```{r}
+par(mfrow = c(4, 2), mar=c(1,1.5,1,1.5))
+pointNum = 8
+for (n in c(3:(pointNum+2))){
+  plot(fx, from = 4.5, to = 13.5, xlab = "", ylab = "", 
+       xaxt = 'n', yaxt = 'n', col = "skyblue", lwd = 3,
+       main = paste(c("number of intervals : "), n-1, sep=""))
+  for (i in c(1:n)){
+    hs = 8/(n-1)
+    px = 5 + hs * (i-1)
+    py = fx(px) 
+    midx = px+hs/2    
+    midy = fx(px+hs/2)
+    points(px, py, pch = 21 , bg = "red", cex = 1.5, col = "red")
+    lines(c(px, px), c(0, py), col = "red", lty = 2, lwd =1)
+    if(i<n){
+      points(midx,midy, cex = 1.5 , col = "red")
+      #lines(c(midx, midx), c(0, midy), col = "darkred", lty = 2, lwd = 0.3)
+      lines(c(px, px + hs), c(midy, midy), col = "red", lwd = 1, lty = 2)
+      lines(c(px, px), c(0, midy), col = "red", lty = 2)
+      lines(c(px+hs, px+hs), c(0, midy), col = "red", lty = 2)
+    }
+  }
+}
+```
+
+----------
+
+### Trapezoidal Rule
+
+The Trapezoidal Rule works by approximating the region under the graph of the function as a trapezoid .
+
+```{r}
+plot(fx, from = 4.5, to = 13.5, xlab = "", ylab = "", 
+     xaxt = 'n', yaxt = 'n', col = "skyblue", lwd = 3,
+     main = "Trapezoidal Rule")
+axis(1, at=5:13)
+mtext("X", side = 1, cex = 1.5, line = 2.5)
+mtext("Y", side = 2, cex = 1.5, line = 2, las = 1)
+
+points(5, fx(5), pch = 21 , bg = "red", cex = 1.5 , col = "red")
+points(13, fx(13), pch = 21 , bg = "red", cex = 1.5, col = "red")
+
+lines(c(5,13),c(fx(5),fx(13)), col = "red" , lty = 2)
+lines(c(5,5), c(0,fx(5)), col = "red", lwd = 3)
+lines(c(13,13), c(0,fx(13)), col = "red", lwd = 3)
+```
+
+when h get smaller , we can see that the region get closer to the real value .
+
+```{r}
+pointNum = 15
+
+for (n in c(3:(pointNum+2))){
+  png(filename = paste(c("Trapezoidal Rule"), n-2, ".png", sep=""))
+  plot(fx, from = 4.5, to = 13.5, xlab = "", ylab = "", 
+       xaxt = 'n', yaxt = 'n', col = "skyblue", lwd = 3,
+       main = paste(c("number of intervals : "), n-1, sep=""))
+  for (i in c(1:n)){
+    hs = 8/(n-1)
+    px = 5 + hs * (i-1)
+    py = fx(px) 
+    points(px, py, pch = 21 , bg = "red", cex = 1.5, col = "red")
+    lines(c(px, px), c(0, py), col = "red", lty = 2)
+    if(i<n){
+      lines(c(px, px + hs), c(py, fx(px + hs)), col = "red", lwd = 3)
+    }
+  }
+  dev.off()
+}
+for(i in 1:pointNum ){
+  assign( paste("PIC", i, sep = ""), 
+  image_read( paste( c("Trapezoidal Rule"), i, ".png", sep="")))
+}
+PIC <- c(PIC1,PIC2,PIC3,PIC4,PIC5,PIC6,PIC7,PIC8,PIC9,PIC10,PIC11,PIC12,PIC13,PIC14,PIC15)
+animation <- image_animate(PIC, fps = 1)
+animation
+```
+
+----------
+
+### Simpson's Rule
+
+Different to the above two rules ,using straight lines to model a curve .
+Simpson's Rule use parabolas to approximate each part of the curve. 
+This proved to be very efficient since it's generally more accurate than the other numerical methods
+
+```{r}
+plot(fx, from = 4.5, to = 13.5, xlab = "", ylab = "", 
+     xaxt = 'n', yaxt = 'n', col = "skyblue", lwd = 3)
+axis(1, at=5:13)
+mtext("X", side = 1, cex = 1.5, line = 2.5)
+mtext("Y", side = 2, cex = 1.5, line = 2, las = 1)
+
+points(5, fx(5), pch = 21 , bg = "red", cex = 1.5 , col = "red")
+points(13, fx(13), pch = 21 , bg = "red", cex = 1.5, col = "red")
+points(9,fx(9), pch = 21 , bg = "red", cex = 1.5, col = "red")
+
+lines(c(5,5), c(0,fx(5)), col = "red", lwd = 3)
+lines(c(9,9), c(0,fx(9)), col = "red", lty = 2)
+lines(c(13,13), c(0,fx(13)), col = "red", lwd = 3)
+
+# Define the parabola function
+px <- function(x){
+  fx(5)*(x-9)*(x-13)/(5-9)/(5-13)+fx(9)*(x-5)*(x-13)/(9-5)/(9-13)+fx(13)*(x-5)*(x-9)/(13-5)/(13-9)
+}
+lines(5:13/1, px(5:13/1), col = "blue", lwd = 2)
+text(11, px(11) + 4, "P(x)", cex = 2, col = "blue")
+text(8, fx(8) + 3, "F(x)", cex = 2, col = "skyblue")
+```
+
+when h get smaller , we can see that the region get closer to the real value .
+
+![Simpson's Rule](https://upload.wikimedia.org/wikipedia/en/6/67/Simpsonsrule2.gif)!
+
+----------
+
+### Comparison
+
+- Cost Time
+```{r}
+plot(h, S_Time, pch = 1, type = "b",col = 1, xlab="", ylab="", las = 1)
+mtext("Sec", side = 2, line = 2.7, las = 1)
+points(h, T_Time, pch = 0, type = "b", col = "dark red", lwd = 1.5)
+points(h, M_Time, pch = 4, type = "b", col = "blue", lwd = 1.5)
+legend("topleft", legend = c("Simpson", "Trapezoid", "Midpoint"), col = c(1,"dark red","blue"),
+       cex = 1.3, ncol = 3, pch = c(1,0,3))
+```
+
+- Error Rate
+```{r}
+plot(h, S_Error, pch = 1, type = "b",col = 1, xlab="", ylab="", las = 1)
+points(h, T_Error, pch = 0, type = "b", col = "dark red", lwd = 1.5)
+points(h, M_Error, pch = 4, type = "b", col = "blue", lwd = 1.5)
+legend("topright", legend = c("Simpson", "Trapezoid", "Midpoint"), col = c(1,"dark red","blue"),
+       cex = 1.3, ncol = 3, pch = c(1,0,3))
+```
+
+- Digits
+```{r}
+plot(h, S_Digit, pch = 1, type = "b",col = 1, xlab="", ylab="", las = 1)
+points(h, T_Digit, pch = 0, type = "b", col = "dark red", lwd = 1.5)
+points(h, M_Digit, pch = 4, type = "b", col = "blue", lwd = 1.5)
+legend("bottomright", legend = c("Simpson", "Trapezoid", "Midpoint"), col = c(1,"dark red","blue"),
+       cex = 1.3, ncol = 3, pch = c(1,0,3))
+```
+
+
+
